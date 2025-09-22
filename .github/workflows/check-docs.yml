@@ -1,0 +1,52 @@
+name: Check Docs
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Verify SECURITY.md exists
+        run: |
+          if [ ! -f "docs/SECURITY.md" ]; then
+            echo "❌ SECURITY.md is missing!"
+            exit 1
+          else
+            echo "✅ SECURITY.md exists"
+          fi
+
+      - name: Verify Tokenomics.md exists
+        run: |
+          if [ ! -f "docs/Tokenomics.md" ]; then
+            echo "❌ Tokenomics.md is missing!"
+            exit 1
+          else
+            echo "✅ Tokenomics.md exists"
+          fi
+
+      - name: Check SECURITY.md content
+        run: |
+          if ! grep -q "Ownership & Transparency" docs/SECURITY.md; then
+            echo "❌ SECURITY.md missing required section 'Ownership & Transparency'"
+            exit 1
+          else
+            echo "✅ SECURITY.md contains 'Ownership & Transparency'"
+          fi
+
+      - name: Check Tokenomics total supply
+        run: |
+          TOTAL=$(grep -oE '[0-9]+' docs/Tokenomics.md | awk '{sum += $1} END {print sum}')
+          if [ "$TOTAL" -ne 100000000 ]; then
+            echo "❌ Tokenomics.md total distribution ($TOTAL) != 100,000,000 NWTK"
+            exit 1
+          else
+            echo "✅ Tokenomics.md total distribution is correct (100,000,000 NWTK)"
+          fi
